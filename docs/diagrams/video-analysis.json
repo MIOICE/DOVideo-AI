@@ -1,0 +1,256 @@
+{
+  "edges": [
+    {
+      "role": "main",
+      "from": "submit",
+      "to": "dispatch"
+    },
+    {
+      "role": "main",
+      "from": "dispatch",
+      "to": "queue"
+    },
+    {
+      "role": "main",
+      "from": "queue",
+      "to": "consume"
+    },
+    {
+      "role": "main",
+      "from": "consume",
+      "to": "context"
+    },
+    {
+      "role": "main",
+      "from": "context",
+      "to": "plan"
+    },
+    {
+      "role": "main",
+      "from": "plan",
+      "to": "loop"
+    },
+    {
+      "role": "main",
+      "from": "loop",
+      "to": "complete"
+    },
+    {
+      "role": "main",
+      "from": "complete",
+      "to": "display"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "校验与预算",
+      "items": [
+        "校验未通过时定向补证或重写；默认最多两轮。",
+        "达到轮次上限时可保留警告产物；超出执行预算则失败。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "消费失败处理",
+      "items": [
+        "暂时性失败交由 MQ 重投，最多三次投递。",
+        "永久失败或次数耗尽时记录失败台账并投递失败主题。"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "type": "frontend",
+      "id": "submit",
+      "label": "提交分析目标",
+      "sources": [
+        {
+          "path": "client/src/useAnalysisWorkspace.js",
+          "line": 319,
+          "end_line": 355
+        }
+      ],
+      "col": 0,
+      "lane": "web",
+      "sublabel": "已上传视频 + 模式"
+    },
+    {
+      "type": "backend",
+      "id": "dispatch",
+      "label": "去重与限流",
+      "sources": [
+        {
+          "path": "server/src/main/java/com/example/server/service/AnalysisDispatchService.java",
+          "line": 63,
+          "end_line": 101
+        }
+      ],
+      "col": 0,
+      "lane": "api",
+      "sublabel": "通过后才投递"
+    },
+    {
+      "type": "messagebus",
+      "id": "queue",
+      "label": "RocketMQ 排队",
+      "sources": [
+        {
+          "path": "server/src/main/java/com/example/server/service/AnalysisDispatchService.java",
+          "line": 81,
+          "end_line": 95
+        }
+      ],
+      "col": 1,
+      "lane": "api",
+      "sublabel": "异步分析消息"
+    },
+    {
+      "type": "backend",
+      "id": "consume",
+      "label": "消费与加锁",
+      "sources": [
+        {
+          "path": "server/src/main/java/com/example/server/consumer/VideoAnalysisConsumer.java",
+          "line": 89,
+          "end_line": 160
+        }
+      ],
+      "col": 1,
+      "lane": "worker",
+      "sublabel": "可复用已完成结果"
+    },
+    {
+      "type": "backend",
+      "id": "context",
+      "label": "恢复或构建上下文",
+      "sources": [
+        {
+          "path": "server/src/main/java/com/example/server/service/AiService.java",
+          "line": 161,
+          "end_line": 207
+        },
+        {
+          "path": "server/src/main/java/com/example/server/service/AiService.java",
+          "line": 233,
+          "end_line": 250
+        }
+      ],
+      "col": 2,
+      "lane": "worker",
+      "sublabel": "VideoContext"
+    },
+    {
+      "type": "backend",
+      "id": "plan",
+      "label": "检索与规划",
+      "sources": [
+        {
+          "path": "server/src/main/java/com/example/server/service/AgentLoopService.java",
+          "line": 97,
+          "end_line": 131
+        }
+      ],
+      "col": 2,
+      "lane": "agent",
+      "sublabel": "相关证据 + Planner"
+    },
+    {
+      "type": "backend",
+      "id": "loop",
+      "label": "执行与证据校验",
+      "sources": [
+        {
+          "path": "server/src/main/java/com/example/server/service/AgentLoopService.java",
+          "line": 134,
+          "end_line": 159
+        },
+        {
+          "path": "server/src/main/java/com/example/server/service/AgentLoopService.java",
+          "line": 187,
+          "end_line": 242
+        }
+      ],
+      "col": 3,
+      "lane": "agent",
+      "sublabel": "Executor + Critic"
+    },
+    {
+      "type": "database",
+      "id": "complete",
+      "label": "保存并通知完成",
+      "sources": [
+        {
+          "path": "server/src/main/java/com/example/server/service/AiService.java",
+          "line": 109,
+          "end_line": 132
+        },
+        {
+          "path": "server/src/main/java/com/example/server/consumer/VideoAnalysisConsumer.java",
+          "line": 169,
+          "end_line": 175
+        }
+      ],
+      "col": 4,
+      "lane": "worker",
+      "sublabel": "结果 + 任务事件"
+    },
+    {
+      "type": "frontend",
+      "id": "display",
+      "label": "展示分析结果",
+      "sources": [
+        {
+          "path": "client/src/useAnalysisWorkspace.js",
+          "line": 182,
+          "end_line": 247
+        }
+      ],
+      "col": 4,
+      "lane": "web",
+      "sublabel": "SSE 阶段与结构化结论"
+    }
+  ],
+  "meta": {
+    "quality_profile": "showcase",
+    "locale": "zh-CN",
+    "title": "DoVideoAI 视频分析泳道图",
+    "output": ".archify/workflow-video-analysis-20261020-120000/video-analysis.html",
+    "repository": {
+      "link_mode": "local-only",
+      "url": "git@github.com:MIOICE/DOVideo-AI.git",
+      "revision": "df4fa83a78a51dfa1718606bf47cf49942e1112e"
+    }
+  },
+  "mainPath": [
+    "submit",
+    "dispatch",
+    "queue",
+    "consume",
+    "context",
+    "plan",
+    "loop",
+    "complete",
+    "display"
+  ],
+  "lanes": [
+    {
+      "label": "Vue 工作台",
+      "id": "web"
+    },
+    {
+      "label": "API 与消息队列",
+      "id": "api"
+    },
+    {
+      "label": "异步分析服务",
+      "id": "worker"
+    },
+    {
+      "label": "AgentLoop",
+      "id": "agent"
+    }
+  ],
+  "schema_version": 2,
+  "diagram_type": "workflow"
+}

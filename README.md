@@ -99,6 +99,16 @@ Evidence frame_000125.jpg
 - **断点恢复** — Checkpoint 以 MySQL 为恢复真源、Redis 为热缓存，持久化 `VideoContext`、分块、计划、Critic 状态与最终结果。
 - **状态可观测** — 前端通过 SSE 接收任务阶段；失败消息写入独立失败主题与失败任务表，可由管理接口重新投递。
 
+## 视频分析泳道图
+
+按职责展示已上传视频从提交分析目标到结果回传的主链路，由 Archify 根据项目源码生成。
+
+![DoVideoAI 视频分析泳道图](docs/diagrams/video-analysis.svg)
+
+[交互版 HTML（下载后用浏览器打开）](docs/diagrams/video-analysis.html) · [图表源文件](docs/diagrams/video-analysis.json)
+
+提交端先去重、限流，再向 RocketMQ 投递；消费者支持结果复用与上下文恢复。Agent 校验失败时可补证或重写，默认最多两轮，达到轮次上限时可保留警告产物；预算耗尽则失败。暂时性消费失败最多投递三次，永久失败或次数耗尽时进入失败台账与失败主题。泳道图聚焦分析主链路，分片上传及多模态抽取细节见上下文说明。
+
 ## 系统流程
 
 ```mermaid
